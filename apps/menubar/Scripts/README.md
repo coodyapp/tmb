@@ -8,8 +8,8 @@ Builds `TokenMyBar.app` and a `.dmg` from the SwiftPM executable into `dist/`.
 Scripts/package.sh [version]   # version defaults to latest git tag, else 0.0.0-dev
 ```
 
-Local builds may opt into signing and notarization with environment variables.
-Published releases always require them:
+Signing and notarization are opt-in via environment variables. Published
+releases remain ad-hoc until the planned Developer ID rollout in 2027:
 
 | Step | Env vars |
 |------|----------|

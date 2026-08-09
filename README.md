@@ -16,10 +16,12 @@ TokenMyBar is a native macOS menu bar app that gives you real-time insight into 
 
 Requires macOS 14 (Sonoma) or newer on Apple Silicon.
 
-Releases are Developer ID-signed and notarized. Gatekeeper verifies the app on
-first launch.
+Releases are ad-hoc signed, not notarized. Developer ID signing and notarization
+are planned for 2027; see [docs/release-signing.md](docs/release-signing.md).
+The install script verifies the published checksum and clears a stale quarantine
+attribute after install.
 
-- **Install script** (recommended — verifies checksum, signature, and notarization):
+- **Install script** (recommended — verifies checksum, no Gatekeeper prompt):
 
   ```bash
   curl -fsSL https://raw.githubusercontent.com/coodyapp/token-my-bar/main/install.sh | bash
@@ -32,7 +34,7 @@ first launch.
   brew install --cask token-my-bar
   ```
 
-- **DMG**: grab `TokenMyBar-<version>.dmg` from the [latest release](https://github.com/coodyapp/token-my-bar/releases/latest) and drag it to `/Applications`.
+- **DMG**: grab `TokenMyBar-<version>.dmg` from the [latest release](https://github.com/coodyapp/token-my-bar/releases/latest), drag it to `/Applications`, then run `xattr -rd com.apple.quarantine /Applications/TokenMyBar.app`.
 
 Full instructions (Gatekeeper notes, first-run Keychain prompts, uninstall): [docs/installation.md](docs/installation.md).
 

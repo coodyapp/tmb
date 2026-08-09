@@ -1,8 +1,17 @@
-# Developer ID Signing and Notarization
+# Developer ID Signing and Notarization (Planned 2027)
 
-Published releases require Developer ID signing, notarization, and stapling.
-`.github/workflows/release.yml` fails before packaging if any signing secret is
-missing, so it cannot publish an ad-hoc build.
+Published releases are currently ad-hoc signed and not notarized. The project
+will buy an Apple Developer Program membership and enable Developer ID signing,
+notarization, and stapling in **2027**.
+
+Until then, `.github/workflows/release.yml` accepts no signing secrets and
+publishes the existing ad-hoc build with its SHA-256 checksum. It rejects a
+partial secret set: signing is enabled only when all six secrets below exist.
+This avoids a release that looks configured but is neither signed nor notarized.
+
+The install script clears a stale quarantine attribute after checksum validation;
+a browser-downloaded DMG needs the same `xattr` step documented in
+[installation.md](installation.md).
 
 ## What to buy
 
@@ -10,7 +19,7 @@ An [Apple Developer Program](https://developer.apple.com/programs/) membership,
 $99/year. An individual account is enough; TokenMyBar does not need an
 organization.
 
-## One-time setup
+## One-time setup for 2027
 
 ### 1. Create the Developer ID Application certificate
 
@@ -60,12 +69,13 @@ Find your team ID at
 security find-identity -v -p codesigning
 ```
 
-## Verifying the first signed release
+## Enabling and verifying the first signed release
 
-Cut a release as usual (push a `vX.Y.Z` tag). The workflow's **Verify signature
-and notarization** step now runs the real checks — `spctl --assess` for
-Gatekeeper's verdict and `stapler validate` for the notarization ticket — and
-fails the release if either does not pass.
+After all six secrets are added, cut a release as usual (push a `vX.Y.Z` tag).
+The workflow imports the certificate and its **Verify signature and
+notarization** step runs the real checks — `spctl --assess` for Gatekeeper's
+verdict and `stapler validate` for the notarization ticket — failing the release
+if either does not pass.
 
 Then confirm on a machine that has never run the app, ideally a fresh macOS user
 account, that a **browser-downloaded** DMG (not `curl`, which sets no quarantine

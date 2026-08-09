@@ -36,10 +36,19 @@ jobs:
             echo "Release tag must use vMAJOR.MINOR.PATCH."
             exit 1
           }
-          [[ -n "$CERT_P12" && -n "$CERT_PASSWORD" && -n "$DEVELOPER_ID_APP" && -n "$AC_APPLE_ID" && -n "$AC_TEAM_ID" && -n "$AC_PASSWORD" ]] || {
-            echo "Developer ID and notarization secrets are required for releases."
+          configured=0
+          for secret in "$CERT_P12" "$CERT_PASSWORD" "$DEVELOPER_ID_APP" "$AC_APPLE_ID" "$AC_TEAM_ID" "$AC_PASSWORD"; do
+            [[ -n "$secret" ]] && ((configured += 1))
+          done
+          [[ "$configured" == 0 || "$configured" == 6 ]] || {
+            echo "Developer ID signing requires all six signing/notarization secrets, or none."
             exit 1
           }
+          if [[ "$configured" == 6 ]]; then
+            echo "Publishing a Developer ID-signed and notarized release."
+          else
+            echo "Publishing an ad-hoc release; Developer ID signing is planned for 2027."
+          fi
 
       - name: Test (release configuration)
         run: swift test -c release --package-path apps/menubar
@@ -50,6 +59,7 @@ jobs:
         run: brew install create-dmg
 
       - name: Import Developer ID certificate
+        if: ${{ secrets.DEVELOPER_ID_CERT_P12 != '' }}
         env:
           CERT_P12: ${{ secrets.DEVELOPER_ID_CERT_P12 }}
           CERT_PASSWORD: ${{ secrets.DEVELOPER_ID_CERT_PASSWORD }}
@@ -86,9 +96,13 @@ jobs:
         run: |
           VERSION="${GITHUB_REF_NAME#v}"
           codesign --verify --strict --verbose=2 "apps/menubar/dist/TokenMyBar.app"
-          # Gatekeeper's own verdict, not merely a well-formed signature.
-          spctl --assess --type execute --verbose=4 "apps/menubar/dist/TokenMyBar.app"
-          xcrun stapler validate "apps/menubar/dist/TokenMyBar-$VERSION.dmg"
+          if [[ -n "$DEVELOPER_ID_APP" ]]; then
+            # Gatekeeper's own verdict, not merely a well-formed signature.
+            spctl --assess --type execute --verbose=4 "apps/menubar/dist/TokenMyBar.app"
+            xcrun stapler validate "apps/menubar/dist/TokenMyBar-$VERSION.dmg"
+          else
+            echo "Ad-hoc build: skipping Gatekeeper and staple checks."
+          fi
 
       - name: Create or update GitHub release
         env:

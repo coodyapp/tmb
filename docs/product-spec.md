@@ -128,9 +128,11 @@ ttl_seconds = 120
 ## Distribution Target
 
 - macOS 14+ native app.
-- Direct Developer ID-signed and notarized `.dmg` releases and Homebrew Cask.
-- Release workflow requires signing and notarization credentials; unsigned
-  artifacts cannot be published.
+- Direct ad-hoc-signed `.dmg` releases and Homebrew Cask. Developer ID signing
+  and notarization are planned for 2027.
+- Release workflow accepts either all signing/notarization credentials or none;
+  partially configured credentials fail safely. Ad-hoc artifacts remain
+  publishable until the 2027 signing rollout.
 - App Store is future work because sandbox constraints may limit provider auth/log access.
 
 ## Reference Inspiration

@@ -157,17 +157,22 @@ No broad filesystem watching.
 
 ## Distribution
 
-Direct DMG and Homebrew ship the same bundle. Published releases are:
+Direct DMG and Homebrew ship the same bundle. Today:
 
-- unsandboxed, with hardened-runtime entitlements needed to read existing local
-  credentials
-- Developer ID-signed with a hardened runtime
-- notarized and stapled; the installer verifies the bundle signature and
-  Gatekeeper assessment before copying it into `/Applications`
+- unsandboxed, and carrying no entitlements
+- ad-hoc signed only: `package.sh` seals the bundle with `codesign --sign -`, so
+  there is no Developer ID, no team identifier, and no hardened runtime
+- not notarized, no stapled ticket — Gatekeeper rejects a quarantined copy
+- consequence: `install.sh` clears a stale `com.apple.quarantine` attribute
 - Homebrew users update through Homebrew
 
 Planned mechanism:
 
+- Developer ID signing, hardened runtime, and notarization in 2027. `package.sh`
+  already supports `DEVELOPER_ID_APP` plus `AC_APPLE_ID`/`AC_TEAM_ID`/
+  `AC_PASSWORD`; `release.yml` imports the certificate only when all six
+  repository secrets documented in [release-signing.md](release-signing.md) are
+  present. Until then it publishes the existing ad-hoc path.
 - Sparkle for direct DMG updates.
 
 App Store is future separate sandboxed target.

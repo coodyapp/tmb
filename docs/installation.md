@@ -2,8 +2,9 @@
 
 TokenMyBar is a native macOS menu bar app. It requires **macOS 14 (Sonoma) or newer** on Apple Silicon.
 
-> **Release integrity:** releases are Developer ID-signed and notarized. macOS
-> Gatekeeper verifies them on first launch.
+> **Release integrity:** releases are ad-hoc signed, not notarized. Developer ID
+> signing and notarization are planned for 2027. The install script verifies the
+> published SHA-256 checksum and clears stale quarantine after installation.
 
 ## Option 1: Install script (recommended)
 
@@ -11,9 +12,9 @@ TokenMyBar is a native macOS menu bar app. It requires **macOS 14 (Sonoma) or ne
 curl -fsSL https://raw.githubusercontent.com/coodyapp/token-my-bar/main/install.sh | bash
 ```
 
-Downloads the latest release DMG, verifies its SHA-256 checksum, Developer ID
-signature, and Gatekeeper notarization status, installs **TokenMyBar.app** into
-`/Applications`, and launches it. Pass a version to pin one: `./install.sh 1.0.7`.
+Downloads the latest release DMG, verifies its SHA-256 checksum, installs
+**TokenMyBar.app** into `/Applications`, clears stale quarantine, and launches
+it. Pass a version to pin one: `./install.sh 1.0.7`.
 
 ## Option 2: Homebrew
 
@@ -28,7 +29,9 @@ brew install --cask token-my-bar
 
 1. Download `TokenMyBar-<version>.dmg` from the [latest release](https://github.com/coodyapp/token-my-bar/releases/latest).
 2. Open the DMG and drag **TokenMyBar.app** to `/Applications`.
-3. Launch TokenMyBar. The app lives in the menu bar only (no Dock icon).
+3. Strip the quarantine flag the browser download added: `xattr -rd
+   com.apple.quarantine /Applications/TokenMyBar.app`.
+4. Launch TokenMyBar. The app lives in the menu bar only (no Dock icon).
 
 ## Option 4: Build from source
 

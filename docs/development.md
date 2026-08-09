@@ -82,6 +82,8 @@ To add a vendor, follow [adding-a-provider.md](adding-a-provider.md).
    update `Casks/token-my-bar.rb` with the new version and the `sha256` of the
    **released** DMG (`shasum -a 256 TokenMyBar-X.Y.Z.dmg`), commit and push.
 
-Published releases require the Developer ID certificate and notarization secrets
-listed in [release-signing.md](release-signing.md). `release.yml` validates them
-before packaging and rejects any release tag outside `vMAJOR.MINOR.PATCH`.
+Published releases are ad-hoc until the planned Developer ID rollout in 2027.
+`release.yml` validates the tag format and accepts either all six Developer ID /
+notarization secrets listed in [release-signing.md](release-signing.md) or none;
+partial configuration fails safely. Once those secrets exist, the same workflow
+signs, notarizes, and staples releases.

@@ -8,9 +8,9 @@ All notable changes to TokenMyBar are documented here. The format follows
 
 ## [1.7.0] - 2026-08-08
 
-Signed-and-notarized release: published builds now carry a Developer ID
-signature, hardened runtime, and a stapled notarization ticket, and the
-installer verifies all three before copying the app.
+Ad-hoc release: Developer ID signing, hardened runtime, and notarization are
+planned for 2027. Current builds remain checksum-verifiable and use the existing
+quarantine-clearing install path.
 
 ### Added
 
@@ -22,13 +22,11 @@ installer verifies all three before copying the app.
 
 ### Changed
 
-- Releases are Developer ID-signed and notarized; the ad-hoc signing path is
-  gone. `release.yml` validates the tag format and all signing/notarization
-  secrets before packaging, and verifies Gatekeeper's own verdict on the
-  bundle plus the stapled DMG ticket afterwards.
-- The install script now verifies the bundle identifier, Developer ID
-  signature, and Gatekeeper assessment before installing, and no longer strips
-  quarantine attributes — a notarized app needs no bypass.
+- `release.yml` validates release tag format and accepts either all Developer ID
+  signing/notarization secrets or none. The ad-hoc path remains active until the
+  planned 2027 signing rollout; partial configuration fails safely.
+- The install script keeps checksum validation and clears stale quarantine after
+  installation until notarized distribution is available in 2027.
 
 ### Fixed
 
