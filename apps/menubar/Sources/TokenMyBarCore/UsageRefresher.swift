@@ -75,7 +75,7 @@ public actor UsageRefresher {
     /// resumes). The non-throwing closure type is the guarantee: a body that
     /// could throw — and thus skip the release on an early exit — no longer
     /// compiles here.
-    private func releasingRefreshLock<T>(_ body: () async -> T) async -> T {
+    private func releasingRefreshLock(_ body: () async -> [ProviderSnapshot]) async -> [ProviderSnapshot] {
         let result = await body()
         await store.endRefresh()
         return result
