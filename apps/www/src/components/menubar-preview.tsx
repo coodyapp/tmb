@@ -450,7 +450,15 @@ export function MenubarPreview() {
               loading={refreshing}
               onClick={runRefresh}
             />
-            <HeaderButton icon={Settings} label="Settings" />
+            <span
+              aria-hidden
+              className="flex size-[26px] items-center justify-center rounded-md"
+            >
+              <Settings
+                className="size-[13px]"
+                style={{ color: MAC.secondary }}
+              />
+            </span>
           </div>
         </div>
 
