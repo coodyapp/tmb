@@ -59,11 +59,14 @@ jobs:
         run: brew install create-dmg
 
       - name: Import Developer ID certificate
-        if: ${{ secrets.DEVELOPER_ID_CERT_P12 != '' }}
         env:
           CERT_P12: ${{ secrets.DEVELOPER_ID_CERT_P12 }}
           CERT_PASSWORD: ${{ secrets.DEVELOPER_ID_CERT_PASSWORD }}
         run: |
+          if [[ -z "$CERT_P12" ]]; then
+            echo "No Developer ID certificate configured; packaging ad-hoc."
+            exit 0
+          fi
           # A throwaway keychain scoped to this runner: never touches login.keychain.
           KEYCHAIN="$RUNNER_TEMP/signing.keychain-db"
           KEYCHAIN_PASSWORD="$(uuidgen)"
