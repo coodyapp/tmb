@@ -6,6 +6,30 @@ All notable changes to TokenMyBar are documented here. The format follows
 
 ## [Unreleased]
 
+## [1.7.0] - 2026-08-08
+
+Signed-and-notarized release: published builds now carry a Developer ID
+signature, hardened runtime, and a stapled notarization ticket, and the
+installer verifies all three before copying the app.
+
+### Added
+
+- `[opencode] server_function_id` in `config.toml` (and the
+  `TOKEN_MY_BAR_OPENCODE_SERVER_FUNCTION_ID` env var for the CLI) replaces the
+  built-in opencode.ai server-function id when a site rebuild breaks workspace
+  discovery — recovery no longer requires a new TokenMyBar build. Malformed
+  ids are ignored and the built-in one is used instead.
+
+### Changed
+
+- Releases are Developer ID-signed and notarized; the ad-hoc signing path is
+  gone. `release.yml` validates the tag format and all signing/notarization
+  secrets before packaging, and verifies Gatekeeper's own verdict on the
+  bundle plus the stapled DMG ticket afterwards.
+- The install script now verifies the bundle identifier, Developer ID
+  signature, and Gatekeeper assessment before installing, and no longer strips
+  quarantine attributes — a notarized app needs no bypass.
+
 ### Fixed
 
 - Browser cookie import no longer merges cookies across Chromium profiles. Two
@@ -14,6 +38,22 @@ All notable changes to TokenMyBar are documented here. The format follows
   filesystem happened to list first — so the account shown was arbitrary. The
   `Default` profile now wins, then the rest in name order, and only the winning
   profile's cookies are sent.
+- Imported cookies now follow browser domain scoping: a host-only cookie for
+  `app.opencode.ai` is no longer replayed to `opencode.ai`, where a real
+  browser would never send it.
+- A cache file with a future modification time (clock skew) read as fresh
+  forever, suppressing every refresh; a future mtime now counts as stale.
+- A refresh with all vendors disabled rewrote the cache, renewing its mtime
+  and delaying the next honest refresh; an empty refresh now leaves the cache
+  untouched.
+- The menu bar preview on the website rendered a non-functional Settings
+  button; it is now a static icon, so screen readers and keyboard users are
+  not offered a control that does nothing.
+- Internal hardening: the refresh lock release is now compile-time guaranteed
+  (a throwing refresh body can no longer skip it), the menu bar window-label
+  rule lives in the tested core package, the Keychain memo cache state is
+  reachable only under its lock, and the last force-unwraps in the app and
+  provider layers are gone.
 
 ## [1.6.0] - 2026-08-03
 
@@ -504,7 +544,8 @@ First stable release.
   cache files are `0600`. Keychain access is read-only behind the standard
   macOS consent prompt. All SQLite access uses parameterized queries.
 
-[Unreleased]: https://github.com/coodyapp/token-my-bar/compare/v1.6.0...HEAD
+[Unreleased]: https://github.com/coodyapp/token-my-bar/compare/v1.7.0...HEAD
+[1.7.0]: https://github.com/coodyapp/token-my-bar/compare/v1.6.0...v1.7.0
 [1.6.0]: https://github.com/coodyapp/token-my-bar/compare/v1.5.0...v1.6.0
 [1.5.0]: https://github.com/coodyapp/token-my-bar/compare/v1.4.0...v1.5.0
 [1.4.0]: https://github.com/coodyapp/token-my-bar/compare/v1.3.0...v1.4.0
