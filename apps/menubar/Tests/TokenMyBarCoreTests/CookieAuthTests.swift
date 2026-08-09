@@ -39,11 +39,12 @@ import Testing
     #expect(ClaudeOAuthUsageProvider.tokenFromKeychainPayload(["access_token": "flat"]) == "flat")
 }
 
-@Test func cookieHostMatchAnchorsToDomainAndSubdomains() {
+@Test func cookieHostMatchRespectsRequestDomainScope() {
     #expect(BrowserCookieImporter.hostMatches("opencode.ai", domain: "opencode.ai"))
     #expect(BrowserCookieImporter.hostMatches(".opencode.ai", domain: "opencode.ai"))
-    #expect(BrowserCookieImporter.hostMatches("app.opencode.ai", domain: "opencode.ai"))
-    // Look-alike domains must NOT match (would otherwise be sent to opencode.ai).
+    // A host-only subdomain cookie cannot be sent to the parent domain.
+    #expect(!BrowserCookieImporter.hostMatches("app.opencode.ai", domain: "opencode.ai"))
+    // Look-alike domains must NOT match either.
     #expect(!BrowserCookieImporter.hostMatches("notopencode.ai", domain: "opencode.ai"))
     #expect(!BrowserCookieImporter.hostMatches("myopencode.ai", domain: "opencode.ai"))
     #expect(!BrowserCookieImporter.hostMatches("opencode.ai.attacker.com", domain: "opencode.ai"))

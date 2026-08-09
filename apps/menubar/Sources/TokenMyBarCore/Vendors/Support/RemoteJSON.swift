@@ -2,13 +2,19 @@ import Foundation
 
 enum RemoteJSON {
     static func request(url: String) -> URLRequest {
-        guard let url = URL(string: url) else {
-            var req = URLRequest(url: URL(string: "https://localhost")!)
-            req.timeoutInterval = 0.1
-            return req
-        }
+        guard let url = URL(string: url) else { return unreachableRequest() }
         var request = URLRequest(url: url, timeoutInterval: 15)
         request.setValue("application/json", forHTTPHeaderField: "Accept")
+        return request
+    }
+
+    /// A request that fails instantly without touching the network, returned
+    /// when a URL string built from vendor data fails to parse. A file URL
+    /// makes `URLSession` throw immediately — the invalid input surfaces as a
+    /// fetch error instead of crashing on a force-unwrapped placeholder.
+    static func unreachableRequest() -> URLRequest {
+        var request = URLRequest(url: URL(fileURLWithPath: "/"))
+        request.timeoutInterval = 0.1
         return request
     }
 

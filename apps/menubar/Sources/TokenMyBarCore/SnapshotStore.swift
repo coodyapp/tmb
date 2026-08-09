@@ -34,7 +34,8 @@ public actor SnapshotStore {
     /// True when the cache exists and is younger than `ttl`.
     public func isFresh(ttl: TimeInterval, now: Date = Date()) -> Bool {
         guard ttl > 0, let modified = modificationDate() else { return false }
-        return now.timeIntervalSince(modified) < ttl
+        let age = now.timeIntervalSince(modified)
+        return age >= 0 && age < ttl
     }
 
     /// Returns cached snapshots only when still fresh, otherwise `nil`.

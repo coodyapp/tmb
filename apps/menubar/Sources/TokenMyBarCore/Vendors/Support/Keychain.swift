@@ -20,26 +20,39 @@ enum Keychain {
     /// Failures are cached too — a denied or absent item re-prompting on every
     /// tick is the same problem wearing a different hat.
     private static let cacheTTL: TimeInterval = 3600
-    private static let cacheLock = NSLock()
-    nonisolated(unsafe) private static var cache: [String: (data: [Data], readAt: Date)] = [:]
+    private static let cache = MemoBox()
 
     static func invalidate() {
-        cacheLock.lock()
         cache.removeAll()
-        cacheLock.unlock()
     }
 
     private static func cached(_ key: String, now: Date = Date()) -> [Data]? {
-        cacheLock.lock()
-        defer { cacheLock.unlock() }
-        guard let entry = cache[key], now.timeIntervalSince(entry.readAt) < cacheTTL else { return nil }
-        return entry.data
+        cache.withLock { entries in
+            guard let entry = entries[key], now.timeIntervalSince(entry.readAt) < cacheTTL else { return nil }
+            return entry.data
+        }
     }
 
     private static func store(_ key: String, _ value: [Data], now: Date = Date()) {
-        cacheLock.lock()
-        cache[key] = (value, now)
-        cacheLock.unlock()
+        cache.withLock { entries in entries[key] = (value, now) }
+    }
+
+    /// NSLock-guarded memo table. The dictionary is reachable only through
+    /// `withLock`, so callers cannot touch state without holding the lock —
+    /// which is what makes the `@unchecked` annotation safe.
+    private final class MemoBox: @unchecked Sendable {
+        private let lock = NSLock()
+        private var entries: [String: (data: [Data], readAt: Date)] = [:]
+
+        func withLock<T>(_ body: (inout [String: (data: [Data], readAt: Date)]) -> T) -> T {
+            lock.lock()
+            defer { lock.unlock() }
+            return body(&entries)
+        }
+
+        func removeAll() {
+            withLock { $0.removeAll() }
+        }
     }
 
     /// Returns the raw secret data for a generic-password item, or `nil` when

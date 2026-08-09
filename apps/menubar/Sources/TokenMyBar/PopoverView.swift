@@ -101,7 +101,7 @@ private struct UpdateBanner: View {
     @State private var isHovered = false
 
     var body: some View {
-        Link(destination: URL(string: UpdateChecker.releasesPage)!) {
+        Link(destination: UpdateChecker.releasesPageURL) {
             HStack(spacing: 8) {
                 Image(systemName: "arrow.down.circle")
                     .font(.system(size: 13, weight: .medium))

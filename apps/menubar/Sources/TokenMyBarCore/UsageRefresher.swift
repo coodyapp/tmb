@@ -64,11 +64,21 @@ public actor UsageRefresher {
         // persisted newer snapshots since this call started, and merging against
         // a pre-lock copy would write that newer data back out regressed.
         let previous = (try? await store.load()) ?? []
-        // Release the lock synchronously before returning (no detached Task, so
-        // the lock is always freed by the time refresh() returns).
-        let merged = await fetchAndMerge(providers: providers, previous: previous, ttl: ttl, now: now)
-        await store.endRefresh()
+        let merged = await releasingRefreshLock {
+            await fetchAndMerge(providers: providers, previous: previous, ttl: ttl, now: now)
+        }
         return Self.visible(merged, enabled: enabled)
+    }
+
+    /// Runs `body` and then releases the refresh lock synchronously (no
+    /// detached Task, so the lock is always freed by the time the caller
+    /// resumes). The non-throwing closure type is the guarantee: a body that
+    /// could throw — and thus skip the release on an early exit — no longer
+    /// compiles here.
+    private func releasingRefreshLock<T>(_ body: () async -> T) async -> T {
+        let result = await body()
+        await store.endRefresh()
+        return result
     }
 
     /// The cache intentionally retains vendors this refresh did not touch, so
@@ -106,7 +116,11 @@ public actor UsageRefresher {
         }
 
         let resolution = SnapshotMerger.resolve(fresh: results, cached: previous)
-        try? await store.save(resolution.persist)
+        // No enabled provider means this call has no new data. Preserving cache
+        // mtime lets another client refresh stale snapshots normally.
+        if !providers.isEmpty {
+            try? await store.save(resolution.persist)
+        }
         Log.refresh.info("refresh complete: \(resolution.display.count) vendors")
         return resolution.display
     }

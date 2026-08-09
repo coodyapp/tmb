@@ -171,3 +171,23 @@ private func tempSnapshotURL() -> URL {
     // Lock unavailable → return cached, don't fetch (would have been 77).
     #expect(result.first?.usagePercent == 11)
 }
+
+@Test func refreshWithNoEnabledProvidersDoesNotRenewCache() async throws {
+    let url = tempSnapshotURL()
+    defer { try? FileManager.default.removeItem(at: url.deletingLastPathComponent()) }
+
+    let store = SnapshotStore(fileURL: url)
+    try await store.save([
+        ProviderSnapshot(providerID: .codex, status: .ok, usedTokens: nil, usagePercent: 11, primarySource: .oauth, confidence: .high, isEstimated: false),
+    ])
+    let initialModification = try #require(await store.modificationDate())
+
+    let refresher = UsageRefresher(
+        registry: ProviderRegistry(providers: [FixedProvider(percent: 77)]),
+        store: store
+    )
+    let result = await refresher.refresh(enabled: [], ttl: 0)
+
+    #expect(result.isEmpty)
+    #expect(await store.modificationDate() == initialModification)
+}

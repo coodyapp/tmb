@@ -27,6 +27,15 @@ public struct MenuBarHeadline: Equatable, Sendable {
         Format.percent(percent)
     }
 
+    /// The bar text: percent plus the window label only when it is not the
+    /// session. A reader assumes the session window, so labelling that one
+    /// costs width without adding information — while an unlabelled weekly
+    /// number is the case that misleads.
+    public var menuBarText: String {
+        guard !windowLabel.isEmpty, windowLabel != "5h" else { return percentText }
+        return "\(percentText) \(windowLabel)"
+    }
+
     /// The sentence VoiceOver reads for the status item — the same numbers the
     /// bar renders, so the spoken value can never freeze at launch time.
     public static func spokenTitle(for segments: [MenuBarHeadline]) -> String {

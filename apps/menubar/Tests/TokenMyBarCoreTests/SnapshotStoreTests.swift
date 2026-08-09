@@ -83,6 +83,16 @@ private func tempStoreURL() -> URL {
     #expect(await store.loadIfFresh(ttl: 60, now: modified.addingTimeInterval(61)) == nil)
 }
 
+@Test func snapshotStoreTreatsFutureTimestampAsStale() async throws {
+    let url = tempStoreURL()
+    defer { try? FileManager.default.removeItem(at: url.deletingLastPathComponent()) }
+    let store = SnapshotStore(fileURL: url)
+    try await store.save([])
+
+    let modified = try #require(await store.modificationDate())
+    #expect(await store.isFresh(ttl: 60, now: modified.addingTimeInterval(-1)) == false)
+}
+
 @Test func snapshotStoreRefreshLockIsExclusive() async throws {
     let url = tempStoreURL()
     defer { try? FileManager.default.removeItem(at: url.deletingLastPathComponent()) }

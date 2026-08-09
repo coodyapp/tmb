@@ -232,11 +232,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         refreshTimer?.invalidate()
         refreshTimer = nil
         guard let seconds = settings.refreshInterval.seconds else { return }
-        refreshTimer = Timer.scheduledTimer(withTimeInterval: seconds, repeats: true) { [weak self] _ in
+        let timer = Timer.scheduledTimer(withTimeInterval: seconds, repeats: true) { [weak self] _ in
             Task { @MainActor [weak self] in await self?.refresh() }
         }
-        refreshTimer?.tolerance = seconds * 0.1
-        RunLoop.main.add(refreshTimer!, forMode: .common)
+        timer.tolerance = seconds * 0.1
+        RunLoop.main.add(timer, forMode: .common)
+        refreshTimer = timer
     }
 
     private func refresh(force: Bool = false) async {
@@ -323,12 +324,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         return title
     }
 
-    /// Names the window only when it is not the session. A reader assumes the
-    /// session window, so labelling that one costs width without adding
-    /// information — while an unlabelled weekly number is the case that misleads.
     private func segmentTitle(_ segment: MenuBarHeadline) -> String {
-        guard !segment.windowLabel.isEmpty, segment.windowLabel != "5h" else { return segment.percentText }
-        return "\(segment.percentText) \(segment.windowLabel)"
+        segment.menuBarText
     }
 
     private func needsAttention(besides segments: [MenuBarHeadline]) -> Bool {

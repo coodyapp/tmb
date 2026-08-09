@@ -97,6 +97,18 @@ private func row(_ key: String, _ percent: Double?, resetIn: TimeInterval? = 360
     #expect(!MenuBarHeadline.needsAttention([unauth], shown: [.codex]))
 }
 
+@Test func menuBarTextNamesTheWindowOnlyWhenItIsNotTheSession() {
+    // A reader assumes the session window, so "5h" costs width without adding
+    // information — while an unlabelled weekly number is the case that misleads.
+    let session = MenuBarHeadline(providerID: .codex, percent: 42, windowLabel: "5h", isStale: false)
+    let weekly = MenuBarHeadline(providerID: .codex, percent: 42, windowLabel: "wk", isStale: false)
+    let unlabeled = MenuBarHeadline(providerID: .codex, percent: 42, windowLabel: "", isStale: false)
+
+    #expect(session.menuBarText == "42%")
+    #expect(weekly.menuBarText == "42% wk")
+    #expect(unlabeled.menuBarText == "42%")
+}
+
 @Test func attentionIgnoresVendorsWithNothingToShow() {
     // .noData with no numbers is an ordinary empty account, not a failure —
     // and a headline-producing vendor is already on screen.

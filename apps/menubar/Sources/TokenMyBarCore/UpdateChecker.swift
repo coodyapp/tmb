@@ -14,6 +14,9 @@ public struct UpdateChecker: Sendable {
 
     public static let releasesURL = "https://api.github.com/repos/coodyapp/token-my-bar/releases/latest"
     public static let releasesPage = "https://github.com/coodyapp/token-my-bar/releases/latest"
+    /// Typed form of `releasesPage` for SwiftUI `Link`. Compile-time https
+    /// literal: the fallback is unreachable and only guards a future edit.
+    public static let releasesPageURL = URL(string: releasesPage) ?? URL(fileURLWithPath: "/")
     static let checkInterval: TimeInterval = 24 * 60 * 60
 
     private let currentVersion: String

@@ -52,11 +52,12 @@ public enum BrowserCookieImporter {
 
     // MARK: - Host / expiry filtering
 
-    /// True when `host` is the domain itself or one of its subdomains.
-    /// Anchored so look-alikes (`myopencode.ai`, `opencode.ai.attacker.com`)
-    /// never match and get their cookies sent to the real domain.
+    /// True when a cookie can be sent to a request for `domain`.
+    ///
+    /// A host-only cookie for a subdomain must never be replayed to its parent:
+    /// browsers would send `app.opencode.ai` only back to that exact host.
     static func hostMatches(_ host: String, domain: String) -> Bool {
-        host == domain || host == "." + domain || host.hasSuffix("." + domain)
+        host == domain || host == "." + domain
     }
 
     /// Chromium `expires_utc` is microseconds since 1601-01-01; `0` marks a
