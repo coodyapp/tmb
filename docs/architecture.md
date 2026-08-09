@@ -121,6 +121,11 @@ primary = "codex"
 ttl_seconds = 120
 ```
 
+Vendor overrides live beside it (see [user-guide.md](user-guide.md)); e.g.
+`[opencode] server_function_id` replaces the built-in opencode.ai
+server-function id when a vendor site rebuild breaks workspace discovery, so
+recovery does not require shipping a new build.
+
 ## Refresh
 
 Current mechanism:
@@ -152,27 +157,17 @@ No broad filesystem watching.
 
 ## Distribution
 
-Direct DMG and Homebrew ship the same bundle. Today:
+Direct DMG and Homebrew ship the same bundle. Published releases are:
 
-- unsandboxed, and carrying no entitlements at all
-- ad-hoc signed only: `package.sh` seals the bundle with `codesign --sign -`, so
-  there is no Developer ID, no team identifier, and no hardened runtime
-- not notarized, no stapled ticket — `spctl` rejects the app and the DMG
-- consequence: Gatekeeper blocks a *quarantined* copy, which is why `install.sh`
-  and the Homebrew cask postflight clear `com.apple.quarantine`
+- unsandboxed, with hardened-runtime entitlements needed to read existing local
+  credentials
+- Developer ID-signed with a hardened runtime
+- notarized and stapled; the installer verifies the bundle signature and
+  Gatekeeper assessment before copying it into `/Applications`
 - Homebrew users update through Homebrew
 
 Planned mechanism:
 
-- Developer ID signing, hardened runtime, and notarization. `package.sh` has the
-  branches (`DEVELOPER_ID_APP` for signing plus
-  `AC_APPLE_ID`/`AC_TEAM_ID`/`AC_PASSWORD` for notarytool) and
-  `Scripts/TokenMyBar.entitlements` holds the intended hardened-runtime
-  entitlements. `release.yml` now imports a certificate and passes those
-  variables through, so the only thing still missing is the Apple Developer
-  account behind the repository secrets — see
-  [release-signing.md](release-signing.md). Until they exist the secrets arrive
-  empty and every step takes the ad-hoc path unchanged.
 - Sparkle for direct DMG updates.
 
 App Store is future separate sandboxed target.

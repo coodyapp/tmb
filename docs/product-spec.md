@@ -128,12 +128,9 @@ ttl_seconds = 120
 ## Distribution Target
 
 - macOS 14+ native app.
-- Direct signed/notarized `.dmg` and Homebrew Cask are release goals.
-- Roadmap: Developer ID signing + notarization once a paid Apple Developer
-  account exists. `package.sh` has the branches (`DEVELOPER_ID_APP` + `AC_*`), but
-  `release.yml` does not set those variables, so nothing signs or notarizes today.
-  Releases are ad-hoc signed and quarantine has to be cleared — `install.sh` and
-  the Homebrew cask do that for you; a browser-downloaded DMG needs `xattr`.
+- Direct Developer ID-signed and notarized `.dmg` releases and Homebrew Cask.
+- Release workflow requires signing and notarization credentials; unsigned
+  artifacts cannot be published.
 - App Store is future work because sandbox constraints may limit provider auth/log access.
 
 ## Reference Inspiration

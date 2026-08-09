@@ -1,16 +1,8 @@
 # Developer ID Signing and Notarization
 
-TokenMyBar releases are currently **ad-hoc signed and not notarized** — there is
-no Apple Developer account yet. `install.sh` and the Homebrew cask clear the
-quarantine flag so the app still opens, but a browser-downloaded DMG shows the
-"unverified developer" flow.
-
-The pipeline is already wired for the real thing. `Scripts/package.sh` signs with
-a hardened runtime, notarizes, and staples whenever the credentials below are
-present, and `.github/workflows/release.yml` passes them through. Until the
-secrets exist they arrive as empty strings and every step takes the same ad-hoc
-path it takes today, so **adding the secrets is the only change needed** — no
-code edits, no workflow edits.
+Published releases require Developer ID signing, notarization, and stapling.
+`.github/workflows/release.yml` fails before packaging if any signing secret is
+missing, so it cannot publish an ad-hoc build.
 
 ## What to buy
 
@@ -83,16 +75,6 @@ flag) opens with no warning:
 xattr -p com.apple.quarantine ~/Downloads/TokenMyBar-X.Y.Z.dmg  # should exist
 spctl --assess --type open --context context:primary-signature -v ~/Downloads/TokenMyBar-X.Y.Z.dmg
 ```
-
-## After it works
-
-The quarantine workarounds exist only because releases are unsigned. Once a
-notarized release ships and is verified on a clean machine, remove:
-
-- the `xattr -rd com.apple.quarantine` call in `install.sh`
-- the `postflight` block and `caveats` in the Homebrew cask
-- the "ad-hoc signed, not notarized" notes in `README.md`,
-  `docs/installation.md`, `docs/architecture.md`, and `docs/product-spec.md`
 
 ## Renewal
 

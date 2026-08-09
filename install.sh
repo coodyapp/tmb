@@ -3,10 +3,7 @@
 # TokenMyBar installer — downloads the release DMG, verifies its checksum,
 # and installs TokenMyBar.app into /Applications.
 #
-# Why this exists: releases are ad-hoc signed (no Apple Developer ID yet).
-# Gatekeeper only assesses quarantined files, and curl downloads never get
-# the com.apple.quarantine flag, so an install through this script launches
-# without the "Apple could not verify..." block.
+# Releases must carry a valid Developer ID signature and notarization ticket.
 #
 # Usage:
 #   curl -fsSL https://raw.githubusercontent.com/coodyapp/token-my-bar/main/install.sh | bash
@@ -15,6 +12,7 @@ set -euo pipefail
 
 REPO="coodyapp/token-my-bar"
 APP_NAME="TokenMyBar"
+EXPECTED_BUNDLE_ID="app.tokenmybar"
 INSTALL_DIR="/Applications"
 
 log() { printf '\033[1;34m==>\033[0m %s\n' "$*"; }
@@ -73,6 +71,17 @@ mount_point=$(hdiutil attach "$tmp_dir/$dmg" -nobrowse -readonly |
 [[ -n "$mount_point" && -d "$mount_point/$APP_NAME.app" ]] ||
   fail "$APP_NAME.app not found in DMG."
 
+app="$mount_point/$APP_NAME.app"
+bundle_id=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$app/Contents/Info.plist" 2>/dev/null) ||
+  fail "Could not read app bundle identifier."
+[[ "$bundle_id" == "$EXPECTED_BUNDLE_ID" ]] ||
+  fail "Unexpected app bundle identifier: $bundle_id."
+log "Verifying Developer ID signature and notarization..."
+codesign --verify --deep --strict --verbose=2 "$app" ||
+  fail "App signature verification failed."
+spctl --assess --type execute --verbose=4 "$app" ||
+  fail "App is not accepted by macOS Gatekeeper."
+
 if pgrep -xq "$APP_NAME"; then
   log "Quitting running $APP_NAME..."
   osascript -e "tell application \"$APP_NAME\" to quit" >/dev/null 2>&1 ||
@@ -89,10 +98,6 @@ else
   sudo rm -rf "$INSTALL_DIR/${APP_NAME:?}.app"
   sudo cp -R "$mount_point/$APP_NAME.app" "$INSTALL_DIR/"
 fi
-
-# curl downloads carry no quarantine flag, but clear any stale one left by a
-# previous browser-downloaded install.
-xattr -rd com.apple.quarantine "$INSTALL_DIR/$APP_NAME.app" 2>/dev/null || true
 
 hdiutil detach "$mount_point" -quiet
 mount_point=""

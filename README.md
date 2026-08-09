@@ -16,26 +16,23 @@ TokenMyBar is a native macOS menu bar app that gives you real-time insight into 
 
 Requires macOS 14 (Sonoma) or newer on Apple Silicon.
 
-Releases are ad-hoc signed, not notarized (no Apple Developer ID yet — see
-[docs/release-signing.md](docs/release-signing.md)). Gatekeeper only checks
-*quarantined* apps, so the paths below differ mainly in who clears the
-quarantine flag.
+Releases are Developer ID-signed and notarized. Gatekeeper verifies the app on
+first launch.
 
-- **Install script** (recommended — verifies checksum, no Gatekeeper prompt):
+- **Install script** (recommended — verifies checksum, signature, and notarization):
 
   ```bash
   curl -fsSL https://raw.githubusercontent.com/coodyapp/token-my-bar/main/install.sh | bash
   ```
 
-- **Homebrew** — recent Homebrew refuses casks from untrusted third-party taps, so
-  either `brew trust --tap coodyapp/tap` first or install with the check off:
+- **Homebrew**:
 
   ```bash
   brew tap coodyapp/tap
-  HOMEBREW_NO_REQUIRE_TAP_TRUST=1 brew install --cask token-my-bar
+  brew install --cask token-my-bar
   ```
 
-- **DMG**: grab `TokenMyBar-<version>.dmg` from the [latest release](https://github.com/coodyapp/token-my-bar/releases/latest), drag to `/Applications`, then `xattr -rd com.apple.quarantine /Applications/TokenMyBar.app`.
+- **DMG**: grab `TokenMyBar-<version>.dmg` from the [latest release](https://github.com/coodyapp/token-my-bar/releases/latest) and drag it to `/Applications`.
 
 Full instructions (Gatekeeper notes, first-run Keychain prompts, uninstall): [docs/installation.md](docs/installation.md).
 

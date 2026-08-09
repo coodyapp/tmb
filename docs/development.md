@@ -82,9 +82,6 @@ To add a vendor, follow [adding-a-provider.md](adding-a-provider.md).
    update `Casks/token-my-bar.rb` with the new version and the `sha256` of the
    **released** DMG (`shasum -a 256 TokenMyBar-X.Y.Z.dmg`), commit and push.
 
-Signing/notarization are opt-in in `package.sh` via `DEVELOPER_ID_APP` /
-`AC_APPLE_ID` / `AC_TEAM_ID` / `AC_PASSWORD` (see the script header).
-`release.yml` sets none of them, so shipped releases are ad-hoc signed
-(`codesign --sign -`) with no hardened runtime, no entitlements, and no notary
-ticket. Wiring those four as repository secrets in `release.yml` is what turns the
-branches on.
+Published releases require the Developer ID certificate and notarization secrets
+listed in [release-signing.md](release-signing.md). `release.yml` validates them
+before packaging and rejects any release tag outside `vMAJOR.MINOR.PATCH`.

@@ -37,6 +37,10 @@ if [[ -z "$VERSION" ]]; then
     VERSION="0.0.0-dev"
   fi
 fi
+[[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]] || {
+  echo "Invalid version: $VERSION" >&2
+  exit 1
+}
 BUILD_NUMBER="$(git -C "$PACKAGE_DIR" rev-list --count HEAD 2>/dev/null || echo 1)"
 echo "==> Packaging $APP_NAME $VERSION (build $BUILD_NUMBER)"
 
