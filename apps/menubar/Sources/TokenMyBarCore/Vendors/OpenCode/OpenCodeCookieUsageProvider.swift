@@ -12,7 +12,11 @@ public struct OpenCodeCookieUsageProvider: ProviderClient {
         let config = AppConfig.load()
         do {
             let cookie = try await BlockingIO.runPrompting { try Self.cookieHeader(config: config) }
-            let workspaceIDs = try await Self.workspaceIDs(cookie: cookie, configuredID: config.openCodeWorkspaceID)
+            let workspaceIDs = try await Self.workspaceIDs(
+                cookie: cookie,
+                configuredID: config.openCodeWorkspaceID,
+                serverFunctionID: Self.serverFunctionID(config: config)
+            )
             var lastError: Error?
             var lastParsed: ProviderSnapshot?
             for workspaceID in workspaceIDs {
@@ -130,8 +134,29 @@ public struct OpenCodeCookieUsageProvider: ProviderClient {
         return usage.rows.filter { $0.key == "spend" }
     }
 
+    /// The built-in id for opencode.ai's `workspaces` server function. It is
+    /// derived from the vendor's own build and changes when the site is
+    /// rebuilt — hence the override below as the no-new-build recovery path.
     static let workspacesServerFunctionID = "def39973159c7f0483d8793a822b8dbb10d067e12c65455fcb4608459ba0234f"
     private static let userAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15"
+
+    /// Resolves the server-function id: `TOKEN_MY_BAR_OPENCODE_SERVER_FUNCTION_ID`
+    /// first, then the config file's `[opencode] server_function_id`, then the
+    /// built-in constant. Malformed overrides fall through to the constant
+    /// rather than being interpolated raw into a URL query and header.
+    static func serverFunctionID(config: AppConfig) -> String {
+        for override in [ProcessInfo.processInfo.environment["TOKEN_MY_BAR_OPENCODE_SERVER_FUNCTION_ID"], config.openCodeServerFunctionID] {
+            guard let override, isValidServerFunctionID(override) else { continue }
+            return override
+        }
+        return workspacesServerFunctionID
+    }
+
+    /// A server-function id is a lowercase hex digest (ASCII alphanumerics only,
+    /// to stay conservative against vendor format drift).
+    static func isValidServerFunctionID(_ id: String) -> Bool {
+        !id.isEmpty && id.allSatisfy { $0.isASCII && ($0.isLetter || $0.isNumber) }
+    }
 
     /// Resolves candidate workspace IDs.
     ///
@@ -140,7 +165,7 @@ public struct OpenCodeCookieUsageProvider: ProviderClient {
     /// server function (`GET /_server?id=…` with an `X-Server-Id` header) and
     /// extracts every `wrk_…` identifier from the serialized JS response,
     /// preserving order.
-    private static func workspaceIDs(cookie: String, configuredID: String?) async throws -> [String] {
+    private static func workspaceIDs(cookie: String, configuredID: String?, serverFunctionID: String) async throws -> [String] {
         for override in [ProcessInfo.processInfo.environment["TOKEN_MY_BAR_OPENCODE_WORKSPACE_ID"], configuredID] {
             guard let override, !override.isEmpty else { continue }
             let candidate = override.components(separatedBy: "/").last ?? override
@@ -150,9 +175,9 @@ public struct OpenCodeCookieUsageProvider: ProviderClient {
             if isValidWorkspaceID(candidate) { return [candidate] }
         }
 
-        let url = "https://opencode.ai/_server?id=\(workspacesServerFunctionID)"
+        let url = "https://opencode.ai/_server?id=\(serverFunctionID)"
         var request = serverRequest(url: url, cookie: cookie)
-        request.setValue(workspacesServerFunctionID, forHTTPHeaderField: "X-Server-Id")
+        request.setValue(serverFunctionID, forHTTPHeaderField: "X-Server-Id")
         request.setValue("server-fn:\(UUID().uuidString)", forHTTPHeaderField: "X-Server-Instance")
         let text = try await RemoteJSON.fetchText(request)
         let ids = workspaceIDs(in: text)
@@ -227,9 +252,7 @@ public struct OpenCodeCookieUsageProvider: ProviderClient {
     }
 
     private static func serverRequest(url: String, cookie: String) -> URLRequest {
-        guard let url = URL(string: url) else {
-            return URLRequest(url: URL(string: "https://localhost")!)
-        }
+        guard let url = URL(string: url) else { return RemoteJSON.unreachableRequest() }
         var request = URLRequest(url: url, timeoutInterval: 15)
         request.setValue(cookie, forHTTPHeaderField: "Cookie")
         request.setValue(userAgent, forHTTPHeaderField: "User-Agent")

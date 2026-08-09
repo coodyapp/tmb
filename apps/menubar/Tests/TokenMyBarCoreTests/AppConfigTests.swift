@@ -50,14 +50,29 @@ import Testing
     cookie = "auth=abc123; theme=dark"
     workspace_id = wrk_01ABC
     db = ~/Sessions/opencode.db
+    server_function_id = abc123def456
     """)
 
     // The `;` pairs of a cookie header survive: a quoted value is verbatim.
     #expect(config.openCodeCookie == "auth=abc123; theme=dark")
     #expect(config.openCodeWorkspaceID == "wrk_01ABC")
     #expect(config.openCodeDatabasePath == "~/Sessions/opencode.db")
+    #expect(config.openCodeServerFunctionID == "abc123def456")
     #expect(config.primaryVendor == nil)
     #expect(config.refreshTTL == AppConfig.defaultTTL)
+}
+
+@Test func appConfigDropsUnsafeServerFunctionID() {
+    #expect(AppConfig(contents: "[opencode]\nserver_function_id = abc?x=1").openCodeServerFunctionID == nil)
+    #expect(AppConfig(contents: "[opencode]\nserver_function_id = \"abc def\"").openCodeServerFunctionID == nil)
+    #expect(AppConfig(contents: "[opencode]\nserver_function_id =").openCodeServerFunctionID == nil)
+}
+
+@Test func serverFunctionIDFallsBackToTheBuiltInConstant() {
+    #expect(OpenCodeCookieUsageProvider.serverFunctionID(config: AppConfig())
+        == OpenCodeCookieUsageProvider.workspacesServerFunctionID)
+    let config = AppConfig(contents: "[opencode]\nserver_function_id = abc123def456")
+    #expect(OpenCodeCookieUsageProvider.serverFunctionID(config: config) == "abc123def456")
 }
 
 @Test func appConfigDropsUnsafeWorkspaceID() {

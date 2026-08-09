@@ -41,8 +41,11 @@ the live store locked.
 2. **Usage**: `GET https://opencode.ai/workspace/<wrk_…>/go` (HTML page). The
    first workspace that reports usage windows wins. `TOKEN_MY_BAR_OPENCODE_WORKSPACE_ID`
    (raw `wrk_…` or full URL) skips the lookup for the CLI; `[opencode]
-   workspace_id` in `config.toml` does the same for the app. This is the recovery
-   path when the hardcoded server-function id above stops resolving.
+   workspace_id` in `config.toml` does the same for the app. This is one recovery
+   path when the hardcoded server-function id above stops resolving; the other is
+   replacing the id itself via `TOKEN_MY_BAR_OPENCODE_SERVER_FUNCTION_ID` or
+   `[opencode] server_function_id` — no new build required. Overrides are
+   accepted only as bare alphanumeric ids; anything else is ignored.
 
 ## Usage mapping
 

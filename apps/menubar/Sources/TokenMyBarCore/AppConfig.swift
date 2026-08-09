@@ -22,6 +22,7 @@ import Foundation
 /// cookie = "auth=…; other=…"
 /// workspace_id = wrk_01ABC
 /// db = ~/.local/share/opencode/opencode.db
+/// server_function_id = def39973159c7f…
 /// ```
 ///
 /// Environment variables win over the file (see `openCodeCookie`). A file
@@ -43,6 +44,10 @@ public struct AppConfig: Equatable, Sendable {
     /// only way to reach a non-default location, since `XDG_DATA_HOME` is a
     /// shell variable the bundle never sees.
     public let openCodeDatabasePath: String?
+    /// Override for the opencode.ai `workspaces` server-function id. The
+    /// built-in id breaks when the vendor rebuilds its site; this is the
+    /// recovery path that does not require shipping a new build.
+    public let openCodeServerFunctionID: String?
     /// Vendors the CLI must not fetch. The app keeps its own toggle in
     /// UserDefaults, which the CLI never reads — without this, a `--refresh`
     /// fetches vendors the user disabled, complete with their Keychain and
@@ -61,6 +66,7 @@ public struct AppConfig: Equatable, Sendable {
         openCodeCookie: String? = nil,
         openCodeWorkspaceID: String? = nil,
         openCodeDatabasePath: String? = nil,
+        openCodeServerFunctionID: String? = nil,
         disabledVendors: [ProviderID] = []
     ) {
         self.primaryVendor = primaryVendor
@@ -68,6 +74,7 @@ public struct AppConfig: Equatable, Sendable {
         self.openCodeCookie = openCodeCookie
         self.openCodeWorkspaceID = openCodeWorkspaceID
         self.openCodeDatabasePath = openCodeDatabasePath
+        self.openCodeServerFunctionID = openCodeServerFunctionID
         self.disabledVendors = disabledVendors
     }
 
@@ -143,6 +150,10 @@ public struct AppConfig: Equatable, Sendable {
         self.openCodeWorkspaceID = AppConfig.nonEmpty(values["opencode.workspace_id"])
             .flatMap { OpenCodeCookieUsageProvider.isValidWorkspaceID($0) ? $0 : nil }
         self.openCodeDatabasePath = AppConfig.nonEmpty(values["opencode.db"])
+        // Same interpolation risk as the workspace id: it lands in a URL query
+        // and header, so only a well-formed id is kept.
+        self.openCodeServerFunctionID = AppConfig.nonEmpty(values["opencode.server_function_id"])
+            .flatMap { OpenCodeCookieUsageProvider.isValidServerFunctionID($0) ? $0 : nil }
         self.disabledVendors = AppConfig.nonEmpty(values["vendors.disabled"])
             .map { raw in
                 raw.split(separator: ",").compactMap { token in

@@ -88,6 +88,7 @@ disabled = claude-code, antigravity
 cookie = "auth=abc123; other=def"
 workspace_id = wrk_01ABC
 db = ~/.local/share/opencode/opencode.db
+server_function_id = def39973159c7f…
 ```
 
 - `ui.primary`: vendor shown first and used by `Selected Provider` summary mode.
@@ -111,6 +112,11 @@ db = ~/.local/share/opencode/opencode.db
 - `opencode.db`: path to the local OpenCode SQLite database used as fallback
   history. `~` is expanded. The app cannot see `XDG_DATA_HOME`, so this is how it
   finds a database outside `~/.local/share/opencode/opencode.db`.
+- `opencode.server_function_id`: replaces the built-in id used for workspace
+  discovery when opencode.ai rebuilds its site and the built-in one stops
+  resolving — recovers without waiting for a new TokenMyBar release. A bare
+  `wrk_…` in `opencode.workspace_id` also works, and skips discovery entirely.
+  Anything that is not a plain alphanumeric id is ignored.
 
 Notes:
 
@@ -160,7 +166,7 @@ TokenMyBar reads usage from local app sessions and provider APIs using existing 
   numbers are the last good reading (local history where a fallback exists).
   Refresh, or re-authenticate if it persists.
 - If macOS blocks the app on first launch, see the Gatekeeper notes in
-  [installation.md](installation.md) — releases are ad-hoc signed, not notarized.
+  [installation.md](installation.md).
 - If OpenCode keeps failing after an `opencode.ai` change, set
   `[opencode] workspace_id` or `[opencode] cookie` in the configuration file
   above; both take effect on the next refresh.
